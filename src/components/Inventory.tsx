@@ -108,16 +108,6 @@ export default function Inventory() {
   };
 
   /**
-   * Adds all items from drinkItems.ts to the inventory
-   */
-  const handleAddAllItems = () => {
-    const allItems = drinkItems.map(item => item.name);
-    const updatedInventory = Array.from(new Set([...inventory, ...allItems]));
-    setInventory(updatedInventory);
-    saveInventory(updatedInventory);
-  };
-
-  /**
    * Handles removing an item from the inventory
    * @param itemToRemove The item to be removed
    */
@@ -179,15 +169,6 @@ export default function Inventory() {
               sx={{ mt: 1 }}
             >
               Add
-            </Button>
-          </Box>
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="outlined"
-              onClick={handleAddAllItems}
-              startIcon={<AddIcon />}
-            >
-              Add All Ingredients
             </Button>
           </Box>
         </CardContent>
