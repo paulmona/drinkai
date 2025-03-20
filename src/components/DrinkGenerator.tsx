@@ -234,10 +234,13 @@ export default function DrinkGenerator() {
 
       const availableIngredients = availableItems.map(item => item.name).join(', ');
       
+      // Request more drinks than needed to account for filtering
+      const requestedDrinks = numDrinks * 2;
+      
       // Construct prompt based on current settings (alcoholic/non-alcoholic)
       const prompt = `Given these available ingredients: ${availableIngredients}
       
-      Please suggest ${numDrinks} possible ${mocktailsOnly ? 'NON-ALCOHOLIC mocktails' : 'ALCOHOLIC cocktails'} that could be made with these ingredients.
+      Please suggest ${requestedDrinks} possible ${mocktailsOnly ? 'NON-ALCOHOLIC mocktails' : 'ALCOHOLIC cocktails'} that could be made with these ingredients.
       ${mocktailsOnly ? 'IMPORTANT: Only suggest non-alcoholic drinks and mocktails. Do not include any alcoholic drinks.' : 'IMPORTANT: Only suggest alcoholic drinks. Do not include any non-alcoholic drinks, mocktails, or virgin drinks.'}
       
       For each drink, provide:
@@ -271,12 +274,7 @@ export default function DrinkGenerator() {
       // Validate and filter drinks based on current settings
       const validSuggestions = parsedSuggestions
         .filter((drink: DrinkSuggestion) => validateDrinkSuggestion(drink, mocktailsOnly))
-        .map((drink: DrinkSuggestion) => ({
-          ...drink,
-          isMocktail: mocktailsOnly || drink.description.toLowerCase().includes('non-alcoholic') || 
-                     drink.description.toLowerCase().includes('mocktail') ||
-                     drink.description.toLowerCase().includes('virgin')
-        }));
+        .slice(0, numDrinks); // Take only the requested number of drinks after filtering
       
       if (validSuggestions.length === 0) {
         throw new Error(`No valid ${mocktailsOnly ? 'mocktails' : 'alcoholic drinks'} were generated. Please try again.`);
