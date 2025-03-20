@@ -166,6 +166,11 @@ export default function DrinkGenerator() {
     loadCachedSuggestions();
   }, []); // Empty dependency array means this runs once on mount
 
+  // Regenerate suggestions when numDrinks or mocktailsOnly changes
+  useEffect(() => {
+    generateSuggestions(true);
+  }, [numDrinks, mocktailsOnly]);
+
   /**
    * Closes the recipe modal and resets related state
    */
