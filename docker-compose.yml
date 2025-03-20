@@ -1,0 +1,12 @@
+services:
+  drink-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_GEMINI_API_KEY=${REACT_APP_GEMINI_API_KEY}
+    ports:
+      - "80:80"
+    environment:
+      - REACT_APP_GEMINI_API_KEY=${REACT_APP_GEMINI_API_KEY}
+    restart: unless-stopped 
