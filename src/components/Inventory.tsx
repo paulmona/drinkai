@@ -87,21 +87,24 @@ export default function Inventory() {
       return;
     }
 
+    // Create a unique ID for the custom item
+    const customItemId = `custom-${newItem.trim().toLowerCase().replace(/\s+/g, '-')}`;
+
     // Check if item already exists in inventory
-    if (inventory.includes(newItem.trim())) {
+    if (inventory.includes(customItemId)) {
       setError('This item is already in your inventory');
       return;
     }
 
     // Add new item and update localStorage
-    const updatedInventory = [...inventory, newItem.trim()];
+    const updatedInventory = [...inventory, customItemId];
     setInventory(updatedInventory);
     saveInventory(updatedInventory);
 
     // Store the category for the custom item
     setCustomItems(prev => ({
       ...prev,
-      [newItem.trim()]: newItemCategory
+      [customItemId]: newItemCategory
     }));
 
     setNewItem('');
@@ -114,12 +117,17 @@ export default function Inventory() {
    * @param itemToRemove The item to be removed
    */
   const handleRemoveItem = (itemToRemove: string) => {
-    const updatedInventory = inventory.filter(item => item !== itemToRemove);
+    // Convert the display name back to an ID
+    const itemId = itemToRemove.startsWith('custom-') 
+      ? itemToRemove 
+      : drinkItems.find(di => di.name === itemToRemove)?.id || itemToRemove;
+
+    const updatedInventory = inventory.filter(item => item !== itemId);
     setInventory(updatedInventory);
     saveInventory(updatedInventory);
     
     // Remove from custom items if it exists
-    const { [itemToRemove]: removed, ...rest } = customItems;
+    const { [itemId]: removed, ...rest } = customItems;
     setCustomItems(rest);
   };
 
@@ -127,24 +135,24 @@ export default function Inventory() {
    * Categorizes inventory items into spirits, mixers, and garnishes
    * @returns Object containing categorized items
    */
-  const categorizedItems = inventory.reduce((acc, item) => {
+  const categorizedItems = inventory.reduce((acc, itemId) => {
     // First check if it's a custom item
-    if (customItems[item]) {
-      acc[customItems[item]].push(item);
+    if (customItems[itemId]) {
+      acc[customItems[itemId]].push(itemId.replace('custom-', '').replace(/-/g, ' '));
       return acc;
     }
 
     // Then check if it exists in drinkItems array
-    const drinkItem = drinkItems.find(di => di.name === item);
+    const drinkItem = drinkItems.find(di => di.id === itemId);
     
     if (drinkItem) {
       // Categorize based on the item's category
       if (drinkItem.category === 'spirit') {
-        acc.spirits.push(item);
+        acc.spirits.push(drinkItem.name);
       } else if (drinkItem.category === 'mixer') {
-        acc.mixers.push(item);
+        acc.mixers.push(drinkItem.name);
       } else if (drinkItem.category === 'garnish') {
-        acc.garnishes.push(item);
+        acc.garnishes.push(drinkItem.name);
       }
     }
     
