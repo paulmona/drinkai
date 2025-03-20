@@ -83,11 +83,33 @@ function validateDrinkSuggestion(drink: DrinkSuggestion, mocktailsOnly: boolean)
     'without alcohol'
   ];
 
+  // Keywords that indicate a drink is alcoholic
+  const alcoholicIndicators = [
+    'alcoholic',
+    'spirit',
+    'liquor',
+    'vodka',
+    'gin',
+    'rum',
+    'tequila',
+    'whiskey',
+    'bourbon',
+    'scotch',
+    'beer',
+    'wine'
+  ];
+
   const textToCheck = `${drink.name.toLowerCase()} ${drink.description.toLowerCase()}`;
   const isNonAlcoholic = nonAlcoholicIndicators.some(indicator => textToCheck.includes(indicator));
+  const isAlcoholic = alcoholicIndicators.some(indicator => textToCheck.includes(indicator));
 
-  // Return true for all drinks if showing mocktails, otherwise only return true for alcoholic drinks
-  return mocktailsOnly ? isNonAlcoholic : !isNonAlcoholic;
+  // If mocktailsOnly is true, only return true for non-alcoholic drinks
+  if (mocktailsOnly) {
+    return isNonAlcoholic;
+  }
+  
+  // If mocktailsOnly is false, only return true for alcoholic drinks
+  return isAlcoholic;
 }
 
 /**
