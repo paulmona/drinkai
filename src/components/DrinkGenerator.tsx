@@ -333,13 +333,6 @@ export default function DrinkGenerator() {
 
         {/* Action buttons */}
         <Button
-          variant="contained"
-          onClick={() => generateSuggestions(false)}
-          disabled={loading}
-        >
-          {loading ? <CircularProgress size={24} /> : 'Show Possible Drinks'}
-        </Button>
-        <Button
           variant="outlined"
           onClick={() => generateSuggestions(true)}
           disabled={loading}
