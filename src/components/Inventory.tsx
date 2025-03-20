@@ -67,7 +67,9 @@ export default function Inventory() {
   // State management for inventory items
   const [inventory, setInventory] = useState<string[]>([]);
   const [newItem, setNewItem] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState<'spirit' | 'mixer' | 'garnish'>('mixer');
   const [error, setError] = useState<string | null>(null);
+  const [customItems, setCustomItems] = useState<Record<string, 'spirit' | 'mixer' | 'garnish'>>({});
 
   // Load inventory from localStorage when component mounts
   useEffect(() => {
@@ -91,19 +93,19 @@ export default function Inventory() {
       return;
     }
 
-    // Check if item exists in drinkItems
-    const drinkItem = drinkItems.find(di => di.name.toLowerCase() === newItem.trim().toLowerCase());
-    if (!drinkItem) {
-      setError('This item is not in our database. Please select from the predefined list.');
-      return;
-    }
-
     // Add new item and update localStorage
     const updatedInventory = [...inventory, newItem.trim()];
     setInventory(updatedInventory);
     saveInventory(updatedInventory);
 
+    // Store the category for the custom item
+    setCustomItems(prev => ({
+      ...prev,
+      [newItem.trim()]: newItemCategory
+    }));
+
     setNewItem('');
+    setNewItemCategory('mixer'); // Reset category to default
     setError(null);
   };
 
@@ -115,6 +117,10 @@ export default function Inventory() {
     const updatedInventory = inventory.filter(item => item !== itemToRemove);
     setInventory(updatedInventory);
     saveInventory(updatedInventory);
+    
+    // Remove from custom items if it exists
+    const { [itemToRemove]: removed, ...rest } = customItems;
+    setCustomItems(rest);
   };
 
   /**
@@ -122,6 +128,13 @@ export default function Inventory() {
    * @returns Object containing categorized items
    */
   const categorizedItems = inventory.reduce((acc, item) => {
+    // First check if it's a custom item
+    if (customItems[item]) {
+      acc[customItems[item]].push(item);
+      return acc;
+    }
+
+    // Then check if it exists in drinkItems array
     const drinkItem = drinkItems.find(di => di.name === item);
     
     if (drinkItem) {
@@ -149,7 +162,7 @@ export default function Inventory() {
       <Card sx={{ mb: 3 }}>
         <CardHeader 
           title="Add New Item" 
-          subheader="Enter an item from our database"
+          subheader="Enter an ingredient and select its category"
         />
         <CardContent>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
@@ -162,6 +175,18 @@ export default function Inventory() {
               error={!!error}
               helperText={error}
             />
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={newItemCategory}
+                label="Category"
+                onChange={(e) => setNewItemCategory(e.target.value as 'spirit' | 'mixer' | 'garnish')}
+              >
+                <MenuItem value="spirit">Spirit</MenuItem>
+                <MenuItem value="mixer">Mixer</MenuItem>
+                <MenuItem value="garnish">Garnish</MenuItem>
+              </Select>
+            </FormControl>
             <Button
               variant="contained"
               onClick={handleAddItem}
