@@ -46,6 +46,7 @@ export const drinkItems: DrinkItem[] = [
   { id: 'coffee', name: 'Coffee', category: 'mixer' },
   { id: 'cream', name: 'Cream', category: 'mixer' },
   { id: 'milk', name: 'Milk', category: 'mixer' },
+  { id: 'ice-cream', name: 'Ice Cream', category: 'mixer' },
   { id: 'simple-syrup', name: 'Simple Syrup', category: 'mixer' },
   { id: 'grenadine', name: 'Grenadine', category: 'mixer' },
   { id: 'bitters', name: 'Angostura Bitters', category: 'mixer' },
