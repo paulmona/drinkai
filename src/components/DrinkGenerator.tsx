@@ -63,56 +63,6 @@ function generateInventoryHash(inventory: string[]): string {
 }
 
 /**
- * Validates if a drink suggestion matches the current filter (alcoholic/non-alcoholic)
- * @param drink The drink suggestion to validate
- * @param mocktailsOnly Whether to show only non-alcoholic drinks
- * @returns boolean indicating if the drink is valid
- */
-function validateDrinkSuggestion(drink: DrinkSuggestion, mocktailsOnly: boolean): boolean {
-  // Keywords that indicate a drink is non-alcoholic
-  const nonAlcoholicIndicators = [
-    'non-alcoholic',
-    'non alcoholic',
-    'mocktail',
-    'virgin',
-    'zero-proof',
-    'zero proof',
-    'alcohol-free',
-    'alcohol free',
-    'no alcohol',
-    'without alcohol'
-  ];
-
-  // Keywords that indicate a drink is alcoholic
-  const alcoholicIndicators = [
-    'alcoholic',
-    'spirit',
-    'liquor',
-    'vodka',
-    'gin',
-    'rum',
-    'tequila',
-    'whiskey',
-    'bourbon',
-    'scotch',
-    'beer',
-    'wine'
-  ];
-
-  const textToCheck = `${drink.name.toLowerCase()} ${drink.description.toLowerCase()}`;
-  const isNonAlcoholic = nonAlcoholicIndicators.some(indicator => textToCheck.includes(indicator));
-  const isAlcoholic = alcoholicIndicators.some(indicator => textToCheck.includes(indicator));
-
-  // If mocktailsOnly is true, only return true for non-alcoholic drinks
-  if (mocktailsOnly) {
-    return isNonAlcoholic;
-  }
-  
-  // If mocktailsOnly is false, only return true for alcoholic drinks
-  return isAlcoholic;
-}
-
-/**
  * Retrieves cached drink suggestions if they exist and are still valid
  * @returns Array of drink suggestions or null if cache is invalid/expired
  */
@@ -234,25 +184,24 @@ export default function DrinkGenerator() {
 
       const availableIngredients = availableItems.map(item => item.name).join(', ');
       
-      // Request more drinks than needed to account for filtering
-      const requestedDrinks = numDrinks * 2;
-      
       // Construct prompt based on current settings (alcoholic/non-alcoholic)
       const prompt = `Given these available ingredients: ${availableIngredients}
       
-      Please suggest ${requestedDrinks} possible ${mocktailsOnly ? 'NON-ALCOHOLIC mocktails' : 'ALCOHOLIC cocktails'} that could be made with these ingredients.
-      ${mocktailsOnly ? 'IMPORTANT: Only suggest non-alcoholic drinks and mocktails. Do not include any alcoholic drinks.' : 'IMPORTANT: Only suggest alcoholic drinks. Do not include any non-alcoholic drinks, mocktails, or virgin drinks.'}
+      Please suggest ${numDrinks} ${mocktailsOnly ? 'NON-ALCOHOLIC mocktails' : 'ALCOHOLIC cocktails'} that could be made with these ingredients.
+      ${mocktailsOnly 
+        ? 'IMPORTANT: Only suggest non-alcoholic drinks and mocktails. Do not include any alcoholic drinks, spirits, or liquors.' 
+        : 'IMPORTANT: Only suggest alcoholic cocktails. Do not include any non-alcoholic drinks, mocktails, or virgin drinks. Each drink must contain alcohol.'}
       
       For each drink, provide:
       1. The name of the drink
-      2. A brief description of its taste and character, including whether it's alcoholic or non-alcoholic
+      2. A brief description of its taste and character
       
       Format the response as a JSON array with objects containing "name" and "description" fields.
       Example format:
       [
         {
           "name": "Drink Name",
-          "description": "Brief description of the drink, including whether it's alcoholic or non-alcoholic"
+          "description": "Brief description of the drink"
         }
       ]`;
 
@@ -271,17 +220,18 @@ export default function DrinkGenerator() {
 
       const parsedSuggestions = JSON.parse(cleanedText);
       
-      // Validate and filter drinks based on current settings
-      const validSuggestions = parsedSuggestions
-        .filter((drink: DrinkSuggestion) => validateDrinkSuggestion(drink, mocktailsOnly))
-        .slice(0, numDrinks); // Take only the requested number of drinks after filtering
+      // Add isMocktail flag to each suggestion
+      const validSuggestions = parsedSuggestions.map((drink: DrinkSuggestion) => ({
+        ...drink,
+        isMocktail: mocktailsOnly
+      }));
       
       if (validSuggestions.length === 0) {
-        throw new Error(`No valid ${mocktailsOnly ? 'mocktails' : 'alcoholic drinks'} were generated. Please try again.`);
+        throw new Error(`No ${mocktailsOnly ? 'mocktails' : 'alcoholic drinks'} were generated. Please try again.`);
       }
 
       // Update state and cache
-      console.log('Validated suggestions:', validSuggestions);
+      console.log('Generated suggestions:', validSuggestions);
       setSuggestions(validSuggestions);
       saveToCache(validSuggestions);
 
