@@ -67,9 +67,7 @@ export default function Inventory() {
   // State management for inventory items
   const [inventory, setInventory] = useState<string[]>([]);
   const [newItem, setNewItem] = useState('');
-  const [newItemCategory, setNewItemCategory] = useState<'spirit' | 'mixer' | 'garnish'>('mixer');
   const [error, setError] = useState<string | null>(null);
-  const [customItems, setCustomItems] = useState<Record<string, 'spirit' | 'mixer' | 'garnish'>>({});
 
   // Load inventory from localStorage when component mounts
   useEffect(() => {
@@ -93,19 +91,19 @@ export default function Inventory() {
       return;
     }
 
+    // Check if item exists in drinkItems
+    const drinkItem = drinkItems.find(di => di.name.toLowerCase() === newItem.trim().toLowerCase());
+    if (!drinkItem) {
+      setError('This item is not in our database. Please select from the predefined list.');
+      return;
+    }
+
     // Add new item and update localStorage
     const updatedInventory = [...inventory, newItem.trim()];
     setInventory(updatedInventory);
     saveInventory(updatedInventory);
 
-    // Store the category for the custom item
-    setCustomItems(prev => ({
-      ...prev,
-      [newItem.trim()]: newItemCategory
-    }));
-
     setNewItem('');
-    setNewItemCategory('mixer'); // Reset category to default
     setError(null);
   };
 
@@ -127,10 +125,6 @@ export default function Inventory() {
     const updatedInventory = inventory.filter(item => item !== itemToRemove);
     setInventory(updatedInventory);
     saveInventory(updatedInventory);
-    
-    // Remove from custom items if it exists
-    const { [itemToRemove]: removed, ...rest } = customItems;
-    setCustomItems(rest);
   };
 
   /**
@@ -138,17 +132,7 @@ export default function Inventory() {
    * @returns Object containing categorized items
    */
   const categorizedItems = inventory.reduce((acc, item) => {
-    // First check if it's a custom item
-    if (customItems[item]) {
-      acc[customItems[item]].push(item);
-      return acc;
-    }
-
-    // Then check if it exists in drinkItems array
     const drinkItem = drinkItems.find(di => di.name === item);
-    
-    console.log('Processing item:', item);
-    console.log('Found drinkItem:', drinkItem);
     
     if (drinkItem) {
       // Categorize based on the item's category
@@ -159,16 +143,10 @@ export default function Inventory() {
       } else if (drinkItem.category === 'garnish') {
         acc.garnishes.push(item);
       }
-    } else {
-      // If item not found in drinkItems, add to uncategorized
-      console.log('Item not found in drinkItems:', item);
-      acc.uncategorized.push(item);
     }
     
     return acc;
-  }, { spirits: [], mixers: [], garnishes: [], uncategorized: [] } as Record<string, string[]>);
-
-  console.log('Final categorized items:', categorizedItems);
+  }, { spirits: [], mixers: [], garnishes: [] } as Record<string, string[]>);
 
   // Render the component
   return (
@@ -181,22 +159,10 @@ export default function Inventory() {
       <Card sx={{ mb: 3 }}>
         <CardHeader 
           title="Add New Item" 
-          subheader="Select a category and enter the item name"
+          subheader="Enter an item from our database"
         />
         <CardContent>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={newItemCategory}
-                label="Category"
-                onChange={(e) => setNewItemCategory(e.target.value as 'spirit' | 'mixer' | 'garnish')}
-              >
-                <MenuItem value="spirit">Spirit</MenuItem>
-                <MenuItem value="mixer">Mixer</MenuItem>
-                <MenuItem value="garnish">Garnish</MenuItem>
-              </Select>
-            </FormControl>
             <TextField
               fullWidth
               label="Item Name"
@@ -318,55 +284,6 @@ export default function Inventory() {
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Uncategorized items (if any) */}
-        {categorizedItems.uncategorized.length > 0 && (
-          <Grid item xs={12}>
-            <Card>
-              <CardHeader 
-                title="Uncategorized Items" 
-                avatar={<Help />}
-              />
-              <CardContent>
-                <List>
-                  {categorizedItems.uncategorized.map((item) => (
-                    <ListItem
-                      key={item}
-                      secondaryAction={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <FormControl size="small" sx={{ minWidth: 120 }}>
-                            <Select
-                              value={customItems[item] || 'mixer'}
-                              onChange={(e) => {
-                                setCustomItems(prev => ({
-                                  ...prev,
-                                  [item]: e.target.value as 'spirit' | 'mixer' | 'garnish'
-                                }));
-                              }}
-                            >
-                              <MenuItem value="spirit">Spirit</MenuItem>
-                              <MenuItem value="mixer">Mixer</MenuItem>
-                              <MenuItem value="garnish">Garnish</MenuItem>
-                            </Select>
-                          </FormControl>
-                          <IconButton 
-                            edge="end" 
-                            aria-label="delete"
-                            onClick={() => handleRemoveItem(item)}
-                          >
-                            <Delete />
-                          </IconButton>
-                        </Box>
-                      }
-                    >
-                      <ListItemText primary={item} />
-                    </ListItem>
-                  ))}
-                </List>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
       </Grid>
     </Box>
   );
